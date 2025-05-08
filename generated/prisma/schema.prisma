@@ -1,0 +1,246 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Ticker {
+  id                   Int                    @id @default(autoincrement())
+  name                 String
+  Trending             Trending[]
+  Anomaly_prediction   Anomaly_prediction[]
+  Bollinger_indicators Bollinger_indicators[]
+  Cumulative_return    Cumulative_return?
+  Ema_indicators       Ema_indicators[]
+  Indicators_technical Indicators_technical[]
+  Macd_indicators      Macd_indicators[]
+  Rsi_indicators       Rsi_indicators[]
+  Sma_indicators       Sma_indicators[]
+  Statistic            Statistic[]
+  Stock_market_data    Stock_market_data[]
+  Volatility           Volatility[]
+
+  @@map("ticker")
+}
+
+model Stock_market_data {
+  id        Int      @id @default(autoincrement())
+  id_ticker Int
+  date      DateTime
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  volume    Int
+  adj_close Float
+  Ticker    Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+  @@map("stock_market_data")
+}
+
+model Cumulative_return {
+  id_ticker            Int      @id
+  date                 DateTime
+  cum_return_open      Float
+  cum_return_high      Float
+  cum_return_low       Float
+  cum_return_close     Float
+  cum_return_volume    Float
+  cum_return_adj_close Float
+  Ticker               Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@unique([id_ticker, date], name: "unique_id_ticker_date")
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+  @@map("cumulative_return")
+}
+
+model Trending {
+  id              Int      @id @default(autoincrement())
+  id_ticker       Int
+  date            DateTime
+  trend           String
+  trend_close     Float
+  trend_open      Float
+  trend_adj_close Float
+  Ticker          Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+}
+
+model Volatility {
+  id                   Int      @id @default(autoincrement())
+  id_ticker            Int
+  date                 DateTime
+  volatility           Float
+  volatility_open      Float
+  volatility_close     Float
+  volatility_adj_close Float
+  Ticker               Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+  @@map("volatility")
+}
+
+model Anomaly_prediction {
+  id             Int      @id @default(autoincrement())
+  id_ticker      Int
+  date           DateTime
+  anomaly_price  Float
+  anomaly_volume Float
+  Ticker         Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@unique([id_ticker, date], name: "unique_id_ticker_date")
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+  @@map("anomaly_prediction")
+}
+
+model Ema_indicators {
+  id        Int      @id @default(autoincrement())
+  id_ticker Int
+  date      DateTime
+  ema_5     Float
+  ema_10    Float
+  ema_20    Float
+  ema_50    Float
+  ema_100   Float
+  ema_200   Float
+  Ticker    Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@unique([id_ticker, date], name: "unique_id_ticker_date")
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+  @@map("ema_indicators")
+}
+
+model Sma_indicators {
+  id        Int      @id @default(autoincrement())
+  id_ticker Int
+  date      DateTime
+  sma_5     Float
+  sma_10    Float
+  sma_20    Float
+  sma_50    Float
+  sma_100   Float
+  sma_200   Float
+  Ticker    Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@unique([id_ticker, date], name: "unique_id_ticker_date")
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+  @@map("sma_indicators")
+}
+
+model Rsi_indicators {
+  id        Int      @id @default(autoincrement())
+  id_ticker Int
+  date      DateTime
+  rsi_5     Float
+  rsi_10    Float
+  rsi_20    Float
+  rsi_50    Float
+  rsi_100   Float
+  rsi_200   Float
+  Ticker    Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@unique([id_ticker, date], name: "unique_id_ticker_date")
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+  @@map("rsi_indicators")
+}
+
+model Macd_indicators {
+  id        Int      @id @default(autoincrement())
+  id_ticker Int
+  date      DateTime
+  macd_5    Float
+  macd_10   Float
+  macd_20   Float
+  macd_50   Float
+  macd_100  Float
+  macd_200  Float
+  Ticker    Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@unique([id_ticker, date], name: "unique_id_ticker_date")
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+  @@map("macd_indicators")
+}
+
+model Bollinger_indicators {
+  id            Int      @id @default(autoincrement())
+  id_ticker     Int
+  date          DateTime
+  bollinger_5   Float
+  bollinger_10  Float
+  bollinger_20  Float
+  bollinger_50  Float
+  bollinger_100 Float
+  bollinger_200 Float
+  Ticker        Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@unique([id_ticker, date], name: "unique_id_ticker_date")
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+  @@map("bollinger_indicators")
+}
+
+model Indicators_technical {
+  id        Int      @id @default(autoincrement())
+  id_ticker Int
+  date      DateTime
+  rsi       Float
+  macd      Float
+  bollinger Float
+  sma       Float
+  ema       Float
+  Ticker    Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@unique([id_ticker, date], name: "unique_id_ticker_date")
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+  @@map("indicators_technical")
+}
+
+model Statistic {
+  id            Int      @id @default(autoincrement())
+  id_ticker     Int
+  date          DateTime
+  avg_price     Float
+  avg_volume    Float
+  median_price  Float
+  median_volume Float
+  min_price     Float
+  min_volume    Float
+  max_price     Float
+  max_volume    Float
+  std_price     Float
+  std_volume    Float
+  Ticker        Ticker   @relation(fields: [id_ticker], references: [id], onDelete: Cascade)
+
+  @@unique([id_ticker, date], name: "unique_id_ticker_date")
+  @@index([id_ticker], map: "idx_id_ticker")
+  @@index([date], map: "idx_date")
+  @@index([id_ticker, date], map: "idx_id_ticker_date")
+  @@map("statistic")
+}
