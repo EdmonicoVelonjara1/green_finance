@@ -2000,16 +2000,19 @@ export namespace Prisma {
   export type TickerMinAggregateOutputType = {
     id: number | null
     name: string | null
+    fullname: string | null
   }
 
   export type TickerMaxAggregateOutputType = {
     id: number | null
     name: string | null
+    fullname: string | null
   }
 
   export type TickerCountAggregateOutputType = {
     id: number
     name: number
+    fullname: number
     _all: number
   }
 
@@ -2025,16 +2028,19 @@ export namespace Prisma {
   export type TickerMinAggregateInputType = {
     id?: true
     name?: true
+    fullname?: true
   }
 
   export type TickerMaxAggregateInputType = {
     id?: true
     name?: true
+    fullname?: true
   }
 
   export type TickerCountAggregateInputType = {
     id?: true
     name?: true
+    fullname?: true
     _all?: true
   }
 
@@ -2127,6 +2133,7 @@ export namespace Prisma {
   export type TickerGroupByOutputType = {
     id: number
     name: string
+    fullname: string
     _count: TickerCountAggregateOutputType | null
     _avg: TickerAvgAggregateOutputType | null
     _sum: TickerSumAggregateOutputType | null
@@ -2151,6 +2158,7 @@ export namespace Prisma {
   export type TickerSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     name?: boolean
+    fullname?: boolean
     Trending?: boolean | Ticker$TrendingArgs<ExtArgs>
     Anomaly_prediction?: boolean | Ticker$Anomaly_predictionArgs<ExtArgs>
     Bollinger_indicators?: boolean | Ticker$Bollinger_indicatorsArgs<ExtArgs>
@@ -2171,9 +2179,10 @@ export namespace Prisma {
   export type TickerSelectScalar = {
     id?: boolean
     name?: boolean
+    fullname?: boolean
   }
 
-  export type TickerOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name", ExtArgs["result"]["ticker"]>
+  export type TickerOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "fullname", ExtArgs["result"]["ticker"]>
   export type TickerInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Trending?: boolean | Ticker$TrendingArgs<ExtArgs>
     Anomaly_prediction?: boolean | Ticker$Anomaly_predictionArgs<ExtArgs>
@@ -2209,6 +2218,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: number
       name: string
+      fullname: string
     }, ExtArgs["result"]["ticker"]>
     composites: {}
   }
@@ -2592,6 +2602,7 @@ export namespace Prisma {
   interface TickerFieldRefs {
     readonly id: FieldRef<"Ticker", 'Int'>
     readonly name: FieldRef<"Ticker", 'String'>
+    readonly fullname: FieldRef<"Ticker", 'String'>
   }
     
 
@@ -15578,7 +15589,8 @@ export namespace Prisma {
 
   export const TickerScalarFieldEnum: {
     id: 'id',
-    name: 'name'
+    name: 'name',
+    fullname: 'fullname'
   };
 
   export type TickerScalarFieldEnum = (typeof TickerScalarFieldEnum)[keyof typeof TickerScalarFieldEnum]
@@ -15767,7 +15779,8 @@ export namespace Prisma {
 
 
   export const TickerOrderByRelevanceFieldEnum: {
-    name: 'name'
+    name: 'name',
+    fullname: 'fullname'
   };
 
   export type TickerOrderByRelevanceFieldEnum = (typeof TickerOrderByRelevanceFieldEnum)[keyof typeof TickerOrderByRelevanceFieldEnum]
@@ -15822,6 +15835,7 @@ export namespace Prisma {
     NOT?: TickerWhereInput | TickerWhereInput[]
     id?: IntFilter<"Ticker"> | number
     name?: StringFilter<"Ticker"> | string
+    fullname?: StringFilter<"Ticker"> | string
     Trending?: TrendingListRelationFilter
     Anomaly_prediction?: Anomaly_predictionListRelationFilter
     Bollinger_indicators?: Bollinger_indicatorsListRelationFilter
@@ -15839,6 +15853,7 @@ export namespace Prisma {
   export type TickerOrderByWithRelationInput = {
     id?: SortOrder
     name?: SortOrder
+    fullname?: SortOrder
     Trending?: TrendingOrderByRelationAggregateInput
     Anomaly_prediction?: Anomaly_predictionOrderByRelationAggregateInput
     Bollinger_indicators?: Bollinger_indicatorsOrderByRelationAggregateInput
@@ -15860,6 +15875,7 @@ export namespace Prisma {
     OR?: TickerWhereInput[]
     NOT?: TickerWhereInput | TickerWhereInput[]
     name?: StringFilter<"Ticker"> | string
+    fullname?: StringFilter<"Ticker"> | string
     Trending?: TrendingListRelationFilter
     Anomaly_prediction?: Anomaly_predictionListRelationFilter
     Bollinger_indicators?: Bollinger_indicatorsListRelationFilter
@@ -15877,6 +15893,7 @@ export namespace Prisma {
   export type TickerOrderByWithAggregationInput = {
     id?: SortOrder
     name?: SortOrder
+    fullname?: SortOrder
     _count?: TickerCountOrderByAggregateInput
     _avg?: TickerAvgOrderByAggregateInput
     _max?: TickerMaxOrderByAggregateInput
@@ -15890,6 +15907,7 @@ export namespace Prisma {
     NOT?: TickerScalarWhereWithAggregatesInput | TickerScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Ticker"> | number
     name?: StringWithAggregatesFilter<"Ticker"> | string
+    fullname?: StringWithAggregatesFilter<"Ticker"> | string
   }
 
   export type Stock_market_dataWhereInput = {
@@ -16798,6 +16816,7 @@ export namespace Prisma {
 
   export type TickerCreateInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
@@ -16815,6 +16834,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
@@ -16831,6 +16851,7 @@ export namespace Prisma {
 
   export type TickerUpdateInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
@@ -16848,6 +16869,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput
@@ -16865,15 +16887,18 @@ export namespace Prisma {
   export type TickerCreateManyInput = {
     id?: number
     name: string
+    fullname: string
   }
 
   export type TickerUpdateManyMutationInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
   }
 
   export type TickerUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
   }
 
   export type Stock_market_dataCreateInput = {
@@ -17947,6 +17972,7 @@ export namespace Prisma {
   export type TickerCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    fullname?: SortOrder
   }
 
   export type TickerAvgOrderByAggregateInput = {
@@ -17956,11 +17982,13 @@ export namespace Prisma {
   export type TickerMaxOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    fullname?: SortOrder
   }
 
   export type TickerMinOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
+    fullname?: SortOrder
   }
 
   export type TickerSumOrderByAggregateInput = {
@@ -20296,6 +20324,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutStock_market_dataInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
@@ -20312,6 +20341,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutStock_market_dataInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
@@ -20343,6 +20373,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutStock_market_dataInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
@@ -20359,6 +20390,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutStock_market_dataInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput
@@ -20374,6 +20406,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutCumulative_returnInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
@@ -20390,6 +20423,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutCumulative_returnInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
@@ -20421,6 +20455,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutCumulative_returnInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
@@ -20437,6 +20472,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutCumulative_returnInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput
@@ -20452,6 +20488,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutTrendingInput = {
     name: string
+    fullname: string
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
     Cumulative_return?: Cumulative_returnCreateNestedOneWithoutTickerInput
@@ -20468,6 +20505,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutTrendingInput = {
     id?: number
     name: string
+    fullname: string
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
     Cumulative_return?: Cumulative_returnUncheckedCreateNestedOneWithoutTickerInput
@@ -20499,6 +20537,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutTrendingInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
     Cumulative_return?: Cumulative_returnUpdateOneWithoutTickerNestedInput
@@ -20515,6 +20554,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutTrendingInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput
     Cumulative_return?: Cumulative_returnUncheckedUpdateOneWithoutTickerNestedInput
@@ -20530,6 +20570,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutVolatilityInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
@@ -20546,6 +20587,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutVolatilityInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
@@ -20577,6 +20619,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutVolatilityInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
@@ -20593,6 +20636,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutVolatilityInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput
@@ -20608,6 +20652,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutAnomaly_predictionInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
     Cumulative_return?: Cumulative_returnCreateNestedOneWithoutTickerInput
@@ -20624,6 +20669,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutAnomaly_predictionInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
     Cumulative_return?: Cumulative_returnUncheckedCreateNestedOneWithoutTickerInput
@@ -20655,6 +20701,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutAnomaly_predictionInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
     Cumulative_return?: Cumulative_returnUpdateOneWithoutTickerNestedInput
@@ -20671,6 +20718,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutAnomaly_predictionInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput
     Cumulative_return?: Cumulative_returnUncheckedUpdateOneWithoutTickerNestedInput
@@ -20686,6 +20734,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutEma_indicatorsInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
@@ -20702,6 +20751,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutEma_indicatorsInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
@@ -20733,6 +20783,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutEma_indicatorsInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
@@ -20749,6 +20800,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutEma_indicatorsInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput
@@ -20764,6 +20816,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutSma_indicatorsInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
@@ -20780,6 +20833,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutSma_indicatorsInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
@@ -20811,6 +20865,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutSma_indicatorsInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
@@ -20827,6 +20882,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutSma_indicatorsInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput
@@ -20842,6 +20898,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutRsi_indicatorsInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
@@ -20858,6 +20915,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutRsi_indicatorsInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
@@ -20889,6 +20947,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutRsi_indicatorsInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
@@ -20905,6 +20964,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutRsi_indicatorsInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput
@@ -20920,6 +20980,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutMacd_indicatorsInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
@@ -20936,6 +20997,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutMacd_indicatorsInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
@@ -20967,6 +21029,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutMacd_indicatorsInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
@@ -20983,6 +21046,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutMacd_indicatorsInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput
@@ -20998,6 +21062,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutBollinger_indicatorsInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Cumulative_return?: Cumulative_returnCreateNestedOneWithoutTickerInput
@@ -21014,6 +21079,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutBollinger_indicatorsInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Cumulative_return?: Cumulative_returnUncheckedCreateNestedOneWithoutTickerInput
@@ -21045,6 +21111,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutBollinger_indicatorsInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Cumulative_return?: Cumulative_returnUpdateOneWithoutTickerNestedInput
@@ -21061,6 +21128,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutBollinger_indicatorsInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Cumulative_return?: Cumulative_returnUncheckedUpdateOneWithoutTickerNestedInput
@@ -21076,6 +21144,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutIndicators_technicalInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
@@ -21092,6 +21161,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutIndicators_technicalInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
@@ -21123,6 +21193,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutIndicators_technicalInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
@@ -21139,6 +21210,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutIndicators_technicalInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput
@@ -21154,6 +21226,7 @@ export namespace Prisma {
 
   export type TickerCreateWithoutStatisticInput = {
     name: string
+    fullname: string
     Trending?: TrendingCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsCreateNestedManyWithoutTickerInput
@@ -21170,6 +21243,7 @@ export namespace Prisma {
   export type TickerUncheckedCreateWithoutStatisticInput = {
     id?: number
     name: string
+    fullname: string
     Trending?: TrendingUncheckedCreateNestedManyWithoutTickerInput
     Anomaly_prediction?: Anomaly_predictionUncheckedCreateNestedManyWithoutTickerInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedCreateNestedManyWithoutTickerInput
@@ -21201,6 +21275,7 @@ export namespace Prisma {
 
   export type TickerUpdateWithoutStatisticInput = {
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUpdateManyWithoutTickerNestedInput
@@ -21217,6 +21292,7 @@ export namespace Prisma {
   export type TickerUncheckedUpdateWithoutStatisticInput = {
     id?: IntFieldUpdateOperationsInput | number
     name?: StringFieldUpdateOperationsInput | string
+    fullname?: StringFieldUpdateOperationsInput | string
     Trending?: TrendingUncheckedUpdateManyWithoutTickerNestedInput
     Anomaly_prediction?: Anomaly_predictionUncheckedUpdateManyWithoutTickerNestedInput
     Bollinger_indicators?: Bollinger_indicatorsUncheckedUpdateManyWithoutTickerNestedInput

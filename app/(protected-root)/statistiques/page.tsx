@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Download, RefreshCcw } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,20 +9,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { StatisticsCard } from "@/components/statistics-card"
 import { ReturnsChart } from "@/components/returns-chart"
 import { useCompany } from "@/components/company-context"
-import { type StockData, getSimulatedDataForCompany, calculateDailyReturns } from "@/lib/data-utils"
+import { 
+  type StockData, 
+  getSimulatedDataForCompany,
+   calculateDailyReturns } from "@/lib/data-utils"
 import { Button } from "@/components/ui/button"
+import { CompanyFilter } from "@/components/company-filter"
+
 
 export default function StatistiquesPage() {
   const [stockData, setStockData] = useState<StockData[]>([])
   const [loading, setLoading] = useState(true)
-  const { selectedCompany } = useCompany() // Moved hook outside useEffect
+  const { selectedCompany } = useCompany() 
 
   useEffect(() => {
+    if(!selectedCompany) return
+
     async function loadData() {
       setLoading(true)
       try {
-        // Utiliser la fonction getSimulatedDataForCompany pour obtenir des données spécifiques à l'entreprise
         const data = getSimulatedDataForCompany(selectedCompany)
+        
         setStockData(data)
       } catch (error) {
         console.error("Erreur lors du chargement des données:", error)
@@ -30,11 +37,9 @@ export default function StatistiquesPage() {
         setLoading(false)
       }
     }
-
     loadData()
   }, [selectedCompany])
 
-  // Préparation des données pour l'histogramme des rendements
   const dailyReturns = calculateDailyReturns(stockData)
   const histogramData = Array(20)
     .fill(0)
@@ -49,22 +54,21 @@ export default function StatistiquesPage() {
   })
 
   return (
-    <div className="flex min-h-screen w-full flex-col">
-      <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-        <div className="flex items-center gap-2 font-semibold">
-          <span className="text-xl">Statistiques</span>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-green-800">Statistiques</h1>
+        <div className="flex items-center gap-3">
+          <CompanyFilter />
+          <Button
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-1 text-green-700 border-green-200"
+          >
+            <RefreshCw size={14} />
+            <span>Actualiser</span>
+          </Button>
         </div>
-        <nav className="ml-auto flex gap-2">
-          <Button variant="outline" size="sm" disabled={loading} onClick={() => window.location.reload()}>
-            <RefreshCcw className="mr-2 h-4 w-4" />
-            Actualiser
-          </Button>
-          <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Exporter
-          </Button>
-        </nav>
-      </header>
+      </div>
       <main className="flex-1 p-4 md:p-6">
         {loading ? (
           <div className="flex h-full items-center justify-center">
@@ -78,16 +82,17 @@ export default function StatistiquesPage() {
         ) : (
           <div className="grid gap-6">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Analyse Statistique - BRK-A</h1>
-              <p className="text-muted-foreground">
+              <h1 className="text-3xl font-bold tracking-tight">Analyse Statistique - {selectedCompany}</h1>
+              {/* <p className="text-muted-foreground">
                 Explorez les statistiques et la distribution des rendements pour Berkshire Hathaway
-              </p>
+              </p> */}
             </div>
             <StatisticsCard
-              data={stockData}
+              company= {selectedCompany}
               title="Statistiques descriptives"
               description="Mesures statistiques clés du prix de l'action"
             />
+
             <Tabs defaultValue="returns">
               <TabsList className="mb-4">
                 <TabsTrigger value="returns">Rendements</TabsTrigger>

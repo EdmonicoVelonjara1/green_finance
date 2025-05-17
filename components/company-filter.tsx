@@ -2,20 +2,39 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCompany } from "@/components/company-context"
+import { useEffect, useState } from "react"
+import { Company } from "@/app/api/get-ticker/route"
 
 export function CompanyFilter() {
   const { selectedCompany, setSelectedCompany } = useCompany()
-
-  // Liste des entreprises de fast-food
-  const companies = [
-    { value: "MCD", label: "McDonald's (MCD)" },
-    { value: "YUM", label: "Yum! Brands (YUM)" },
-    { value: "WEN", label: "Wendy's (WEN)" },
-    { value: "PZZA", label: "Papa John's (PZZA)" },
-    { value: "QSR", label: "Restaurant Brands Int. (QSR)" },
-    { value: "DNKN", label: "Dunkin' Brands (DNKN)" },
-    { value: "SBUX", label: "Starbucks (SBUX)" },
-  ]
+    const [isLoading, setIsLoading] = useState(true)
+    const [companies, setCompanies] = useState<Company[]>([])
+    
+      useEffect(() => {
+        async function fetchCompanies() {
+          try {
+            setIsLoading(true)
+            const response = await fetch("/api/get-ticker")
+            if (!response.ok) {
+              throw new Error("Failed to fetch companies")
+            }
+            const data = await response.json()
+            const companyList: Company[] = Object.entries(data.cmp).map(([ticker, name]) => ({
+              value: ticker,
+              label: `${name} (${ticker})`,
+            }))
+            console.log("List", companyList)
+            setCompanies(companyList)
+          } catch (err) {
+            console.error("Error fetching companies:", err)
+            setCompanies([])
+          } finally {
+            setIsLoading(false)
+          }
+        }
+    
+        fetchCompanies()
+      }, [])
 
   return (
     <Select value={selectedCompany} onValueChange={setSelectedCompany}>

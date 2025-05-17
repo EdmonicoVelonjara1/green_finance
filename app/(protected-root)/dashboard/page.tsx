@@ -73,16 +73,18 @@ export default function DashboardPage() {
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
             <StatisticsCard
-              title="Prix actuel"
-              value={`$${latestPrice.toFixed(2)}`}
-              change={`${priceChange >= 0 ? "+" : ""}${priceChange.toFixed(2)} (${percentChange.toFixed(2)}%)`}
-              isPositive={priceChange >= 0}
-            />
+                title="Prix actuel"
+                value={`$${latestPrice.toFixed(2)}`}
+                change={`${priceChange >= 0 ? "+" : ""}${priceChange.toFixed(2)} (${percentChange.toFixed(2)}%)`}
+                isPositive={priceChange >= 0} 
+                data={stockData}            
+                />
             <StatisticsCard
               title="Volume"
               value={stockData.length > 0 ? `${(stockData[stockData.length - 1].volume / 1000000).toFixed(1)}M` : "N/A"}
               change="+5.2%"
               isPositive={true}
+              data={stockData}
             />
             <StatisticsCard
               title="Volatilité"
@@ -93,6 +95,7 @@ export default function DashboardPage() {
               }
               change="-0.5%"
               isPositive={false}
+              data={stockData}
             />
           </div>
 

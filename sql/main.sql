@@ -12,14 +12,14 @@ CREATE DATABASE IF NOT EXISTS green_finance;
 USE green_finance;
 
 CREATE TABLE IF NOT EXISTS ticker (
-    id VARCHAR(191) PRIMARY KEY NOT NULL,    
+    id INT PRIMARY KEY NOT NULL,    
     name VARCHAR(100)
 );
 
 -- Table de données boursières
 CREATE TABLE IF NOT EXISTS stock_market_data(
     id INT PRIMARY KEY NOT NULL,
-    id_ticker VARCHAR(191) NOT NULL,
+    id_ticker INT NOT NULL,
     date DATE,
     open FLOAT NOT NULL,
     high FLOAT NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS stock_market_data(
 
 -- Table de rendements cumulés
 CREATE TABLE IF NOT EXISTS cumulative_return(
-    id_ticker VARCHAR(191) NOT NULL PRIMARY KEY,
+    id_ticker INT NOT NULL PRIMARY KEY,
     cum_return_open FLOAT NOT NULL,
     cum_return_high FLOAT NOT NULL,
     cum_return_low FLOAT NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS cumulative_return(
 
 -- Table de tendances
 CREATE TABLE IF NOT EXISTS trending (
-    id_ticker VARCHAR(191) NOT NULL PRIMARY KEY,
+    id_ticker INT NOT NULL PRIMARY KEY,
     trend_open FLOAT NOT NULL,
     trend_close FLOAT NOT NULL,
     trend_adj_close FLOAT NOT NULL,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS trending (
 
 -- Table de volatilité
 CREATE TABLE IF NOT EXISTS volatility (
-    id_ticker VARCHAR(191) NOT NULL PRIMARY KEY,
+    id_ticker INT NOT NULL PRIMARY KEY,
     volatility_open FLOAT NOT NULL,
     volatility_close FLOAT NOT NULL,
     volatility_adj_close FLOAT NOT NULL,
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS volatility (
 
 -- Table de preductions d'anomalie de prix et de volume
 CREATE TABLE IF NOT EXISTS anomaly_prediction(
-    id_ticker VARCHAR(191) NOT NULL PRIMARY KEY,
+    id_ticker INT NOT NULL PRIMARY KEY,
     anomaly_price FLOAT NOT NULL,
     anomaly_volume FLOAT NOT NULL,
     date DATE NOT NULL,    
@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS anomaly_prediction(
 -- Table de indicateurs techniques
 CREATE TABLE indicators_technical (
     indicator_id INT AUTO_INCREMENT PRIMARY KEY,
-    id_ticker VARCHAR(191) NOT NULL,
+    id_ticker INT NOT NULL,
     
     sma_5 FLOAT,
     sma_10 FLOAT,
@@ -105,20 +105,45 @@ CREATE TABLE indicators_technical (
 
 -- Table de statistiques
 
+DROP TABLE IF EXISTS statistic;
+
 CREATE TABLE IF NOT EXISTS statistic (
-    id_ticker VARCHAR(191) PRIMARY KEY NOT NULL,
-    cum_return_open FLOAT NOT NULL,
-    cum_return_close FLOAT NOT NULL,
-    cum_return_adj_close FLOAT NOT NULL,
-    trend_open FLOAT NOT NULL,
-    trend_close FLOAT NOT NULL,
-    trend_adj_close FLOAT NOT NULL,
-    volatility_open FLOAT NOT NULL,
-    volatility_close FLOAT NOT NULL,
-    volatility_adj_close FLOAT NOT NULL,
-    anomaly_price FLOAT NOT NULL,
-    anomaly_volume FLOAT NOT NULL,
-    rsi FLOAT NOT NULL,
-    date DATE NOT NULL,
+    id  INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    id_ticker       INT,
+    avg_price       FLOAT NOT NULL,
+    avg_volume      FLOAT NOT NULL,
+    median_price    FLOAT NOT NULL,
+    median_volume   FLOAT NOT NULL,
+    min_price       FLOAT NOT NULL,
+    min_volume      FLOAT NOT NULL,
+    max_price       FLOAT NOT NULL,
+    max_volume      FLOAT NOT NULL,
+    std_price       FLOAT NOT NULL,
+    std_volume      FLOAT NOT NULL,
+
+    month  INT,
+    year   INT,
+
     FOREIGN KEY (id_ticker) REFERENCES ticker(id)
+);
+
+CREATE TABLE overall_stat (
+    id INT PRIMARY KEY NOT NULL,
+    id_ticker INT NOT NULL,
+    
+    mean_price FLOAT,
+    median_price FLOAT,
+    min_price FLOAT,
+    max_price FLOAT,
+    std_price FLOAT, 
+
+    mean_vol FLOAT,
+    median_vol FLOAT,
+    min_vol FLOAT,
+    max_vol FLOAT,
+    std_vol FLOAT, 
+
+    asym FLOAT,
+    year INT NOT NULL,
+    FOREIGN KEY (id_ticker) REFERENCES ticker(id) ON DELETE CASCADE
 );

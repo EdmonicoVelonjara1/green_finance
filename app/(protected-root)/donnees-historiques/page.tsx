@@ -25,7 +25,7 @@ export default function DonneesHistoriquesPage() {
     if (!selectedCompany) return
 
     async function getData() {
-      setLoading(true)
+      // setLoading(true)
       try {
         const response = await fetch("/api/donnees-historiques", {
           method: "POST",

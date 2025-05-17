@@ -122,7 +122,8 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.TickerScalarFieldEnum = {
   id: 'id',
-  name: 'name'
+  name: 'name',
+  fullname: 'fullname'
 };
 
 exports.Prisma.Stock_market_dataScalarFieldEnum = {
@@ -269,7 +270,8 @@ exports.Prisma.SortOrder = {
 };
 
 exports.Prisma.TickerOrderByRelevanceFieldEnum = {
-  name: 'name'
+  name: 'name',
+  fullname: 'fullname'
 };
 
 exports.Prisma.TrendingOrderByRelevanceFieldEnum = {

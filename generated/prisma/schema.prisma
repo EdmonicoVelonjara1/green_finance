@@ -11,6 +11,7 @@ datasource db {
 model Ticker {
   id                   Int                    @id @default(autoincrement())
   name                 String
+  fullname             String                 @map("full_name")
   Trending             Trending[]
   Anomaly_prediction   Anomaly_prediction[]
   Bollinger_indicators Bollinger_indicators[]

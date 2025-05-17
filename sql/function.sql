@@ -2,9 +2,9 @@
 
 DELIMITER //
 CREATE OR REPLACE FUNCTION weekly_trend(
-    ticker_id VARCHAR(191), 
-    year YEAR, 
-    month MONTH, 
+    ticker_id INT, 
+    year INT, 
+    month INT, 
     day_begin INT DEFAULT 1,
     day_end INT DEFAULT 7,
     price_type VARCHAR(10) DEFAULT 'close',
@@ -105,7 +105,11 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE OR REPLACE FUNCTION calculate_trend_price(ticker_id VARCHAR(191), year YEAR, month MONTH, type_price VARCHAR(10))  
+CREATE OR REPLACE FUNCTION calculate_trend_price(
+    ticker_id INT, 
+    year INT, month INT, 
+    type_price VARCHAR(10)
+)  
 RETURNS FLOAT DETERMINISTIC 
 BEGIN
     DECLARE trend FLOAT DEFAULT 0;
@@ -144,7 +148,7 @@ END //
 DELIMITER ;
 
 
-CREATE OR REPLACE FUNCTION calculate_volatility(ticker_id VARCHAR(192), year YEAR, month MONTH, type_price VARCHAR(10))
+CREATE OR REPLACE FUNCTION calculate_volatility(ticker_id INT, year INT, month INT, type_price VARCHAR(10))
 RETURNS FLOAT DETERMINISTIC
 BEGIN
     DECLARE volatility FLOAT DEFAULT 0;
@@ -183,7 +187,7 @@ DELIMITER ;
 
 
 DELIMITER //
-CREATE OR REPLACE FUNCTION calculate_anomaly(ticker_id VARCHAR(191), year YEAR, month MONTH, type_price VARCHAR(10))
+CREATE OR REPLACE FUNCTION calculate_anomaly(ticker_id INT, year INT, month INT, type_price VARCHAR(10))
 RETURNS FLOAT DETERMINISTIC
 BEGIN
     DECLARE anomaly FLOAT DEFAULT 0;
@@ -220,7 +224,7 @@ BEGIN
 END //
 DELIMITER ;
 DELIMITER //
-CREATE OR REPLACE FUNCTION calculate_anomaly_volume(ticker_id VARCHAR(191), year YEAR, month MONTH)
+CREATE OR REPLACE FUNCTION calculate_anomaly_volume(ticker_id VARCHAR(191), year INT, month INT)
 RETURNS FLOAT DETERMINISTIC
 BEGIN
     DECLARE anomaly_volume FLOAT DEFAULT 0;
@@ -240,48 +244,216 @@ BEGIN
 END //
 DELIMITER ;
 
--- DELIMITER //
--- CREATE OR REPLACE FUNCTION 
+DELIMITER //
 
+CREATE FUNCTION median(data_type VARCHAR(2))
+RETURNS FLOAT DETERMINISTIC
+BEGIN
+    DECLARE median_value FLOAT DEFAULT 0;
+    DECLARE counter INT DEFAULT 0;
+    DECLARE month, year, ticker_id INT;
+    DECLARE d1 FLOAT DEFAULT 0;
+    DECLARE d2 FLOAT DEFAULT 0;
+    DECLARE pos1, pos2 INT;
+    DECLARE pos INT;  -- Moved this declaration to the top with other DECLAREs
+
+    -- Count the number of records for the given ticker, year, and month
+    SET ticker_id = NEW.id_ticker;
+    SET month = MONTH(NEW.date);
+    SET year = YEAR(NEW.date);
+
+    SELECT COUNT(*), MONTH(date) INTO counter
+    FROM stock_market_data
+    WHERE id_ticker = ticker_id
+        AND YEAR(date) = year
+        AND MONTH(date) = month;
+
+    IF counter = 0 THEN
+        RETURN NULL;
+    END IF;
+
+    SET pos1 = (counter / 2 - 1); 
+    SET pos2 = (counter / 2); 
+
+    IF counter % 2 = 0 THEN
+        IF data_type = 'C' THEN
+            -- Fetch the two middle closing prices
+            SELECT close INTO d1
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(date) = year
+                AND MONTH(date) = month
+            ORDER BY close
+            LIMIT 1 OFFSET pos1;
+
+            SELECT close INTO d2
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(date) = year
+                AND MONTH(date) = month
+            ORDER BY close
+            LIMIT 1 OFFSET pos2;
+
+        ELSEIF data_type = 'V' THEN
+            -- Fetch the two middle volumes
+            SELECT volume INTO d1
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(NEW.date) = year
+                AND MONTH(NEW.date) = month
+            ORDER BY volume
+            LIMIT 1 OFFSET pos1;
+
+            SELECT volume INTO d2
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(date) = year
+                AND MONTH(date) = month
+            ORDER BY volume
+            LIMIT 1 OFFSET pos2;
+        ELSE
+            -- Invalid data_type
+            RETURN NULL;
+        END IF;
+
+        -- Calculate median as average of two middle values
+        SET median_value = (d1 + d2) / 2;
+    ELSE
+        SET pos = counter / 2; -- 0-based index for middle value
+
+        IF data_type = 'C' THEN
+            SELECT close INTO median_value
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(date) = year
+                AND MONTH(date) = month
+            ORDER BY close
+            LIMIT 1 OFFSET pos;
+
+        ELSEIF data_type = 'V' THEN
+            -- Fetch the middle volume
+            SELECT volume INTO median_value
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(date) = year
+                AND MONTH(date) = month
+            ORDER BY volume
+            LIMIT 1 OFFSET pos;
+        ELSE
+            -- Invalid data_type
+            RETURN NULL;
+        END IF;
+    END IF;
+
+    RETURN median_value;
+END //
+DELIMITER ;
 
 
 DELIMITER //
-
-CREATE OR REPLACE FUNCTION mean_price(ticker_id VARCHAR(191), year YEAR, month MONTH, type_price VARCHAR(10))
+CREATE FUNCTION med_stat(
+    data_type VARCHAR(2),
+    ticker_id INT,
+    year INT DEFAULT 2024
+)
 RETURNS FLOAT DETERMINISTIC
 BEGIN
-    DECLARE mean_price FLOAT DEFAULT 0;
-    DECLARE i INT DEFAULT 0;
-    DECLARE current_price FLOAT DEFAULT 0;
-    DECLARE previous_price FLOAT DEFAULT 0;
+    DECLARE median_value FLOAT DEFAULT 0;
+    DECLARE counter INT DEFAULT 0;
+    DECLARE ticker_id INT;
+    DECLARE d1 FLOAT DEFAULT 0;
+    DECLARE d2 FLOAT DEFAULT 0;
+    DECLARE pos1, pos2 INT;
+    DECLARE pos INT;  
 
-    IF type_price = 'open' THEN
-        SET current_price  = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date ASC LIMIT 1 OFFSET i);
-        SET previous_price = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
-        IF previous_price IS NOT NULL THEN
-            SET mean_price = (current_price + previous_price) / 2;
-            
-        END IF;
+    -- Count the number of records for the given ticker, year, and month
+    SET ticker_id = NEW.id_ticker;
+    -- SET month = MONTH(NEW.date);
+    -- SET year = YEAR(NEW.date);
 
-    ELSEIF type_price = 'close' THEN
-        SET current_price  = (SELECT close FROM stock_market_data 
-                            WHERE id_ticker = ticker_id 
-                            AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i);
-        SET previous_price = (SELECT close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
-        IF previous_price IS NOT NULL THEN
-            SET mean_price = (current_price + previous_price) / 2;
-            
-        END IF;
+    SELECT COUNT(*), MONTH(date) INTO counter
+    FROM stock_market_data
+    WHERE id_ticker = ticker_id
+        AND YEAR(date) = year
+        AND MONTH(date) = month;
 
-    ELSEIF type_price = 'adj_close' THEN
-        SET current_price  = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i);
-        SET previous_price = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
-        IF previous_price IS NOT NULL THEN
-            SET mean_price = (current_price + previous_price) / 2;
-            
-        END IF;
-
+    IF counter = 0 THEN
+        RETURN NULL;
     END IF;
-    RETURN mean_price;
+
+    SET pos1 = (counter / 2 - 1); 
+    SET pos2 = (counter / 2); 
+
+    IF counter % 2 = 0 THEN
+        IF data_type = 'C' THEN
+            -- Fetch the two middle closing prices
+            SELECT close INTO d1
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(date) = year
+                AND MONTH(date) = month
+            ORDER BY close
+            LIMIT 1 OFFSET pos1;
+
+            SELECT close INTO d2
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(date) = year
+                AND MONTH(date) = month
+            ORDER BY close
+            LIMIT 1 OFFSET pos2;
+
+        ELSEIF data_type = 'V' THEN
+            -- Fetch the two middle volumes
+            SELECT volume INTO d1
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(NEW.date) = year
+                AND MONTH(NEW.date) = month
+            ORDER BY volume
+            LIMIT 1 OFFSET pos1;
+
+            SELECT volume INTO d2
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(date) = year
+                AND MONTH(date) = month
+            ORDER BY volume
+            LIMIT 1 OFFSET pos2;
+        ELSE
+            -- Invalid data_type
+            RETURN NULL;
+        END IF;
+
+        -- Calculate median as average of two middle values
+        SET median_value = (d1 + d2) / 2;
+    ELSE
+        SET pos = counter / 2; -- 0-based index for middle value
+
+        IF data_type = 'C' THEN
+            SELECT close INTO median_value
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(date) = year
+                AND MONTH(date) = month
+            ORDER BY close
+            LIMIT 1 OFFSET pos;
+
+        ELSEIF data_type = 'V' THEN
+            -- Fetch the middle volume
+            SELECT volume INTO median_value
+            FROM stock_market_data
+            WHERE id_ticker = ticker_id
+                AND YEAR(date) = year
+                AND MONTH(date) = month
+            ORDER BY volume
+            LIMIT 1 OFFSET pos;
+        ELSE
+            -- Invalid data_type
+            RETURN NULL;
+        END IF;
+    END IF;
+
+    RETURN median_value;
 END //
 DELIMITER ;

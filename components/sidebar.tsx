@@ -7,23 +7,20 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
-  CircleDollarSign,
-  FileText,
   Home,
   PieChart,
-  Search,
   Settings,
   TrendingUp,
   Calendar,
-  Briefcase,
-  FileBarChart,
+
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCompany } from "@/components/company-context"
 import { useSidebarToggle } from "@/components/sidebar-context"
 import { SidebarToggle } from "@/components/sidebar-toggle"
+import { Company } from "@/app/api/get-ticker/route"
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -34,6 +31,39 @@ export function Sidebar() {
   })
   const { selectedCompany, setSelectedCompany } = useCompany()
   const { sidebarVisible } = useSidebarToggle()
+  const [companies, setCompanies] = useState<Company[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // Fetch companies from API
+  useEffect(() => {
+    async function fetchCompanies() {
+      try {
+        setIsLoading(true)
+        const response = await fetch("/api/get-ticker")
+        if (!response.ok) {
+          throw new Error("Failed to fetch companies")
+        }
+        const data = await response.json()
+        // console.log("Fetched companies:", data.cmp)
+
+        const companyList: Company[] = Object.entries(data.cmp).map(([ticker, name]) => ({
+          value: ticker,
+          label: `${name} (${ticker})`,
+        }))
+        setCompanies(companyList)
+      } catch (err) {
+        console.error("Error fetching companies:", err)
+        setError("Failed to load companies")
+        // Fallback to empty list or hardcoded data if needed
+        setCompanies([])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchCompanies()
+  }, [])
 
   const toggleMenu = (menu: keyof typeof openMenus) => {
     setOpenMenus((prev) => ({
@@ -41,17 +71,6 @@ export function Sidebar() {
       [menu]: !prev[menu],
     }))
   }
-
-  // Remplacer la liste des entreprises par les entreprises de fast-food
-  const companies = [
-    { value: "MCD", label: "McDonald's (MCD)" },
-    { value: "YUM", label: "Yum! Brands (YUM)" },
-    { value: "WEN", label: "Wendy's (WEN)" },
-    { value: "PZZA", label: "Papa John's (PZZA)" },
-    { value: "QSR", label: "Restaurant Brands Int. (QSR)" },
-    { value: "DNKN", label: "Dunkin' Brands (DNKN)" },
-    { value: "SBUX", label: "Starbucks (SBUX)" },
-  ]
 
   const menuItems = [
     {
@@ -68,26 +87,12 @@ export function Sidebar() {
       ],
     },
     {
-      id: "analyse-fondamentale",
-      title: "Analyse fondamentale",
-      href: "/analyse-fondamentale",
-      icon: <FileText size={16} />,
-      hasSubmenu: true,
-      submenu: [],
-    },
-    {
       id: "statistiques",
       title: "Statistiques",
       href: "/statistiques",
       icon: <BarChart3 size={16} />,
       hasSubmenu: true,
       submenu: [],
-    },
-    {
-      title: "Analyse sectorielle",
-      href: "/analyse-sectorielle",
-      icon: <FileBarChart size={16} />,
-      hasSubmenu: false,
     },
     {
       title: "Comparaison",
@@ -105,24 +110,6 @@ export function Sidebar() {
       title: "Données historiques",
       href: "/donnees-historiques",
       icon: <Calendar size={16} />,
-      hasSubmenu: false,
-    },
-    {
-      title: "Dividendes",
-      href: "/dividendes",
-      icon: <CircleDollarSign size={16} />,
-      hasSubmenu: false,
-    },
-    {
-      title: "Screener",
-      href: "/screener",
-      icon: <Search size={16} />,
-      hasSubmenu: false,
-    },
-    {
-      title: "Portefeuille",
-      href: "/portefeuille",
-      icon: <Briefcase size={16} />,
       hasSubmenu: false,
     },
     {

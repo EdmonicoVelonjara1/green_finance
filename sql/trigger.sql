@@ -18,8 +18,6 @@ BEGIN
 END //
 DELIMITER ;
 
--- Trigger 2: Vérification de la cohérence des prix dans stock_market_data
--- Objectif: Vérifier que high >= low et que open/close sont compris entre high et low.
 DELIMITER //
 CREATE TRIGGER before_insert_stock_market_data_price_coherence
 BEFORE INSERT ON stock_market_data
@@ -36,9 +34,6 @@ BEGIN
 END //
 DELIMITER ;
 
--- Trigger 3: Mise à jour de la table cumulative_return après insertion dans stock_market_data
--- Objectif: Calculer les rendements cumulés pour open, high, low, close, adj_close.
--- Formule: Rendement cumulé = ((Prix actuel - Prix initial) / Prix initial) * 100
 DELIMITER //
 CREATE TRIGGER after_insert_cumulative_return
 AFTER INSERT ON stock_market_data
@@ -197,14 +192,6 @@ BEGIN
 END //
 DELIMITER ;
 
--- Trigger 6: Mise à jour de la table indicators_technical après insertion dans stock_market_data
--- Objectif: Calculer les indicateurs techniques (SMA, EMA, RSI, MACD, Bollinger Bands).
--- Formules:
--- SMA (Simple Moving Average): Moyenne des prix sur N jours
--- EMA (Exponential Moving Average): EMA_t = (Prix * k) + (EMA_{t-1} * (1-k)), k = 2/(N+1)
--- RSI (Relative Strength Index): 100 - (100 / (1 + RS)), RS = (Moyenne gains / Moyenne pertes) sur 14 jours
--- MACD: EMA(12) - EMA(26), Signal = EMA(9) de MACD
--- Bollinger Bands: Moyenne ± 2 * écart-type sur 20 jours
 DELIMITER //
 CREATE TRIGGER after_insert_indicators_technical
 AFTER INSERT ON stock_market_data
@@ -214,7 +201,7 @@ BEGIN
     DECLARE avg_gain, avg_loss, rs FLOAT;
     DECLARE ema_12, ema_26, prev_ema_50, prev_ema_200 FLOAT;
     DECLARE count_days INT;
-    
+
     -- SMA 50 et 200 (moyenne simple sur 50 et 200 jours)
     SELECT AVG(close), COUNT(*)
     INTO sma_50, count_days
@@ -323,59 +310,351 @@ DELIMITER ;
 -- Trigger 7: Mise à jour de la table statistic après insertion dans stock_market_data
 -- Objectif: Consolider les données des autres tables dans statistic.
 DELIMITER //
-CREATE TRIGGER after_insert_statistic
+
+CREATE OR REPLACE TRIGGER after_insert_statistic
 AFTER INSERT ON stock_market_data
 FOR EACH ROW
 BEGIN
-    DECLARE cum_return_open, cum_return_close, cum_return_adj_close FLOAT;
-    DECLARE trend_open, trend_close, trend_adj_close FLOAT;
-    DECLARE volatility_open, volatility_close, volatility_adj_close FLOAT;
-    DECLARE anomaly_price, anomaly_volume, rsi FLOAT;
+    DECLARE ticker_id INT;
+    DECLARE counter INT;
+    DECLARE avg_price, avg_volume, 
+            median_price, median_volume,
+            min_price, min_volume,
+            max_price, max_volume,
+            std_price, std_volume FLOAT;
+    DECLARE month_val INT;
+    DECLARE year_val INT;
     
-    -- Récupérer les données des autres tables
-    SELECT cum_return_open, cum_return_close, cum_return_adj_close
-    INTO cum_return_open, cum_return_close, cum_return_adj_close
-    FROM cumulative_return
-    WHERE id_ticker = NEW.id_ticker AND date = NEW.date;
+    -- Capture the ticker and date from the new row
+    SET ticker_id = NEW.id_ticker;
+    SET month_val = MONTH(NEW.date); -- Extract month from NEW.date
+    SET year_val = YEAR(NEW.date);   -- Extract year from NEW.date
+    SET counter = (SELECT count(*) FROM statistic WHERE id_ticker = ticker_id);
+    -- Compute statistics for the same ticker, month, and year
+    SELECT 
+        AVG(close), 
+        AVG(volume), 
+        median(ticker_id, 'C', month_val, year_val), 
+        median(ticker_id, 'V', month_val, year_val),
+        MIN(close), 
+        MIN(volume),
+        MAX(close), 
+        MAX(volume),
+        STDDEV(close), 
+        STDDEV(volume)
+    INTO 
+        avg_price, 
+        avg_volume,
+        median_price, 
+        median_volume,
+        min_price, 
+        min_volume,
+        max_price, 
+        max_volume,
+        std_price, 
+        std_volume
+    FROM stock_market_data
+    WHERE id_ticker = ticker_id
+      AND MONTH(date) = month_val
+      AND YEAR(date) = year_val;
+
+    IF counter = 0 THEN
+    -- Insert statistics into the statistic table
+        INSERT INTO statistic (
+            id_ticker,
+            avg_price,
+            avg_volume,
+            median_price,
+            median_volume,
+            min_price,
+            min_volume,
+            max_price,
+            max_volume,
+            std_price,
+            std_volume,
+            month, 
+            year
+        )
+        VALUES (
+            NEW.id_ticker,
+            IFNULL(avg_price, 0),
+            IFNULL(avg_volume, 0),
+            IFNULL(median_price, 0),
+            IFNULL(median_volume, 0),        
+            IFNULL(min_price, 0),
+            IFNULL(min_volume, 0),
+            IFNULL(max_price, 0),
+            IFNULL(max_volume, 0),
+            IFNULL(std_price, 0),
+            IFNULL(std_volume, 0),
+            month_val,
+            year_val
+        );
+
+    ELSE
+        UPDATE statistic
+        SET
+            avg_price = IFNULL(avg_price, 0),
+            avg_volume = IFNULL(avg_volume, 0),
+            median_price = IFNULL(median_price, 0),
+            median_volume = IFNULL(median_volume, 0),
+            min_price = IFNULL(min_price, 0),
+            min_volume = IFNULL(min_volume, 0),
+            max_price = IFNULL(max_price, 0),
+            max_volume = IFNULL(max_volume, 0),
+            std_price = IFNULL(std_price, 0),
+            std_volume = IFNULL(std_volume, 0)
+        WHERE
+            id_ticker = NEW.id_ticker AND
+            month = month_val AND
+            year = year_val;
+        
+    END IF
+END //
+
+DELIMITER ;
+
+
+
+-- Calcul de la tendance: Hebdomadaire
+
+DELIMITER //
+CREATE OR REPLACE FUNCTION weekly_trend(
+    ticker_id INT, 
+    year INT, 
+    month INT, 
+    day_begin INT DEFAULT 1,
+    day_end INT DEFAULT 7,
+    price_type VARCHAR(10) DEFAULT 'close',
+    is_cumulative BOOLEAN DEFAULT FALSE
+)
+RETURNS FLOAT DETERMINISTIC
+BEGIN
+    DECLARE week_end_price FLOAT DEFAULT 0;
+    DECLARE cum_return FLOAT DEFAULT 0;
+    DECLARE i INT DEFAULT 0;
+    DECLARE current_price FLOAT DEFAULT 0;
+    DECLARE previous_price FLOAT DEFAULT 0;
+    DECLARE nb_days INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO nb_days 
+    FROM stock_market_data 
+    WHERE id_ticker = ticker_id 
+        AND YEAR(date) = year 
+        AND MONTH(date) = month;
+        AND DAY(date) <= day_end
+        AND DAY(date) >= day_begin;
+
+    IF nb_days = 0 THEN
+        RETURN NULL;
+    END IF;
+
+    IF is_cumulative THEN
+        IF price_type = 'close' THEN
+            WHILE i < nb_days DO
+                SET current_price  = (SELECT close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_start ORDER BY date DESC LIMIT 1 OFFSET i);
+                SET previous_price = (SELECT close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_start ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+
+                IF previous_price IS NOT NULL THEN
+                    SET cum_return = cum_return + ((current_price - previous_price) / previous_price);
+
+                END IF;
+
+                SET i = i + 1;
+            END WHILE;
+            SET cum_return = 100 * cum_return / nb_days;
+        ELSEIF price_type = 'open' THEN
+            WHILE i < nb_days DO
+                SET current_price  = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_start ORDER BY date DESC LIMIT 1 OFFSET i);
+                SET previous_price = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_start ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+
+                IF previous_price IS NOT NULL THEN
+                    SET cum_return = cum_return + ((current_price - previous_price) / previous_price);
+
+                END IF;
+
+                SET i = i + 1;
+            END WHILE;
+            SET cum_return = 100 * cum_return / nb_days;
+        ELSEIF price_type = 'adj_close' THEN
+            WHILE i < nb_days DO
+                SET current_price  = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_start ORDER BY date DESC LIMIT 1 OFFSET i);
+                SET previous_price = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_start ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+
+                IF previous_price IS NOT NULL THEN
+                    SET cum_return = cum_return + ((current_price - previous_price) / previous_price);
+
+                END IF;
+
+                SET i = i + 1;
+            END WHILE;
+            SET cum_return = 100 * cum_return / nb_days;
+        END IF;
+    ELSE
+        IF price_type = 'close' THEN
+            SET current_price = (SELECT close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_begin ORDER BY date DESC LIMIT 1);
+            SET previous_price = (SELECT close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_begin ORDER BY date ASC LIMIT 1);
+        ELSEIF price_type = 'open' THEN
+            SET current_price = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_begin ORDER BY date DESC LIMIT 1);
+            SET previous_price = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_begin ORDER BY date ASC LIMIT 1);
+        ELSEIF price_type = 'adj_close' THEN
+            SET current_price  = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_begin ORDER BY date DESC LIMIT 1);
+            SET previous_price = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) = year AND MONTH(date) = month AND DAY(date) <= day_end AND DAY(date) >= day_begin ORDER BY date ASC LIMIT 1);
+        END IF;
+        IF previous_price IS NOT NULL THEN
+            SET cum_return = 100 * ((current_price - previous_price) / previous_price);
+        END IF;
+    END IF;
+
+    RETURN cum_return;
+
+END //
+DELIMITER ;
+
+CREATE OR REPLACE FUNCTION get_week_number(
+    date DATE
+)
+RETURNS INT DETERMINISTIC
+BEGIN
+    DECLARE week_number INT DEFAULT 0;
+    SET week_number = WEEK(date, 1);
+    RETURN week_number;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE FUNCTION calculate_trend_price(ticker_id INT, year INT, month INT, type_price VARCHAR(10))  
+RETURNS FLOAT DETERMINISTIC 
+BEGIN
+    DECLARE trend FLOAT DEFAULT 0;
+    DECLARE i INT DEFAULT 0;
+    DECLARE current_price FLOAT DEFAULT 0;
+    DECLARE previous_price FLOAT DEFAULT 0;
+
+    IF type_price = 'open' THEN
+        
+        SET current_price  = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) = month ORDER BY date ASC LIMIT 1 OFFSET i);
+        SET previous_price = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) = month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+        IF previous_price IS NOT NULL THEN
+            SET trend = 100 * ((current_price - previous_price) / previous_price);
+            
+        END IF;
+
+    ELSEIF type_price = 'close' THEN
+        SET current_price  = (SELECT close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i);
+        SET previous_price = (SELECT close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+        IF previous_price IS NOT NULL THEN
+            SET trend = 100 * ((current_price - previous_price) / previous_price);
+            
+        END IF;
+
+    ELSEIF type_price = 'adj_close' THEN
+        SET current_price  = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i);
+        SET previous_price = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+        IF previous_price IS NOT NULL THEN
+            SET trend = 100 * ((current_price - previous_price) / previous_price);
+            
+        END IF;
+
+    END IF;
+    RETURN trend;
+END //
+DELIMITER ;
+
+
+CREATE OR REPLACE FUNCTION calculate_volatility(ticker_id INT, year INT, month INT, type_price VARCHAR(10))
+RETURNS FLOAT DETERMINISTIC
+BEGIN
+    DECLARE volatility FLOAT DEFAULT 0;
+    DECLARE i INT DEFAULT 0;
+    DECLARE current_price FLOAT DEFAULT 0;
+    DECLARE previous_price FLOAT DEFAULT 0;
+
+    IF type_price = 'open' THEN
+        SET current_price  = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date ASC LIMIT 1 OFFSET i);
+        SET previous_price = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+        IF previous_price IS NOT NULL THEN
+            SET volatility = 100 * ((current_price - previous_price) / previous_price);
+            
+        END IF;
+
+    ELSEIF type_price = 'close' THEN
+        SET current_price  = (SELECT close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i);
+        SET previous_price = (SELECT close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+        IF previous_price IS NOT NULL THEN
+            SET volatility = 100 * ((current_price - previous_price) / previous_price);
+            
+        END IF;
+
+    ELSEIF type_price = 'adj_close' THEN
+        SET current_price  = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i);
+        SET previous_price = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+        IF previous_price IS NOT NULL THEN
+            SET volatility = 100 * ((current_price - previous_price) / previous_price);
+            
+        END IF;
+
+    END IF;
+    RETURN volatility;
+END //
+DELIMITER ;
+
+
+DELIMITER //
+CREATE OR REPLACE FUNCTION calculate_anomaly(ticker_id INT, year INT, month INT, type_price VARCHAR(10))
+RETURNS FLOAT DETERMINISTIC
+BEGIN
+    DECLARE anomaly FLOAT DEFAULT 0;
+    DECLARE i INT DEFAULT 0;
+    DECLARE current_price FLOAT DEFAULT 0;
+    DECLARE previous_price FLOAT DEFAULT 0;
+
+    IF type_price = 'open' THEN
+        SET current_price  = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date ASC LIMIT 1 OFFSET i);
+        SET previous_price = (SELECT open FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+        IF previous_price IS NOT NULL THEN
+            SET anomaly = 100 * ((current_price - previous_price) / previous_price);
+            
+        END IF;
+
+    ELSEIF type_price = 'close' THEN
+        SET current_price  = (SELECT close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i);
+        SET previous_price = (SELECT close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+        IF previous_price IS NOT NULL THEN
+            SET anomaly = 100 * ((current_price - previous_price) / previous_price);
+            
+        END IF;
+
+    ELSEIF type_price = 'adj_close' THEN
+        SET current_price  = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i);
+        SET previous_price = (SELECT adj_close FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
+        IF previous_price IS NOT NULL THEN
+            SET anomaly = 100 * ((current_price - previous_price) / previous_price);
+            
+        END IF;
+
+    END IF;
+    RETURN anomaly;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE OR REPLACE FUNCTION calculate_anomaly_volume(ticker_id VARCHAR(191), year INT, month INT)
+RETURNS FLOAT DETERMINISTIC
+BEGIN
+    DECLARE anomaly_volume FLOAT DEFAULT 0;
+    DECLARE i INT DEFAULT 0;
+    DECLARE current_volume BIGINT DEFAULT 0;
+    DECLARE previous_volume BIGINT DEFAULT 0;
+
+    SET current_volume  = (SELECT volume FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date ASC LIMIT 1 OFFSET i);
+    SET previous_volume = (SELECT volume FROM stock_market_data WHERE id_ticker = ticker_id AND YEAR(date) <= year AND MONTH(date) <= month ORDER BY date DESC LIMIT 1 OFFSET i + 1);
     
-    SELECT trend_open, trend_close, trend_adj_close
-    INTO trend_open, trend_close, trend_adj_close
-    FROM trending
-    WHERE id_ticker = NEW.id_ticker AND date = NEW.date;
-    
-    SELECT volatility_open, volatility_close, volatility_adj_close
-    INTO volatility_open, volatility_close, volatility_adj_close
-    FROM volatility
-    WHERE id_ticker = NEW.id_ticker AND date = NEW.date;
-    
-    SELECT anomaly_price, anomaly_volume
-    INTO anomaly_price, anomaly_volume
-    FROM anomaly_prediction
-    WHERE id_ticker = NEW.id_ticker AND date = NEW.date;
-    
-    SELECT rsi_14
-    INTO rsi
-    FROM indicators_technical
-    WHERE id_ticker = NEW.id_ticker AND date = NEW.date;
-    
-    -- Insérer dans statistic
-    INSERT INTO statistic (
-        id_ticker,
-        cum_return_open,
-        cum_return_close,
-        cum_return_adj_close,
-        trend_open,
-        trend_close,
-        trend_adj_close,
-        volatility_open,
-        volatility_close,
-        volatility_adj_close,
-        anomaly_price,
-        anomaly_volume,
-        rsi,
-        date
-    )
-    VALUES (
-        NEW.id_ticker,
-        IFNULL(cum_return_open, 0),
-        IFNULL(cum_return_close, 0),
+    IF previous_volume IS NOT NULL THEN
+        SET anomaly_volume = 100 * ((current_volume - previous_volume) / previous_volume);
+        
+    END IF;
+
+    RETURN anomaly_volume;
+END //
+DELIMITER ;
