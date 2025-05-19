@@ -1,4 +1,4 @@
-"use client"
+// "use client"
 
 import { IStat } from "@/app/api/statistic/route"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 
 interface StatisticsCardProps {
   // data: StockData[]
+  year: number
   company: string
   title?: string
   description?: string
@@ -16,6 +17,7 @@ interface StatisticsCardProps {
 
 export function StatisticsCard({
   // data,
+  year,
   company,
   title = "Statistiques",
   description,
@@ -24,8 +26,8 @@ export function StatisticsCard({
   isPositive,
 }: StatisticsCardProps) {
   const [stats, setStats] = useState<IStat>();
-  const [year, setYear] = useState(2024);
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  // const [year, setYear] = useState(2024);
+  // const [availableYears, setAvailableYears] = useState<number[]>([]);
 
   useEffect(()=> {
     async function getData() {
@@ -40,7 +42,7 @@ export function StatisticsCard({
         })
         const result = await response.json()
         setStats(result.data);
-        setAvailableYears(result.years)
+        // setAvailableYears(result.years)
       } catch(error) {
         console.error("Erreur lors de la recupération des données")
       }
@@ -55,19 +57,6 @@ export function StatisticsCard({
   if (value && change) {
     return (
       <>
-        <div className="mb-4">
-          <label className="text-sm text-green-800 font-medium mr-2">Année :</label>
-          <select
-            value={year}
-            onChange={(e) => setYear(parseInt(e.target.value))}
-            className="border border-green-300 rounded-md px-2 py-1"
-          >
-            {availableYears.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
-        
         <Card className="border-green-200 shadow-md">
           <CardHeader className="pb-2">
             <CardTitle className="text-green-800">{title}</CardTitle>
@@ -90,7 +79,7 @@ export function StatisticsCard({
         <CardHeader className="pb-2 flex relative justify-between items-start">
           <CardTitle className="text-green-800">{title}</CardTitle>
           {description && <CardDescription>{description}</CardDescription>}
-          <div className="absolute top-0 right-0">
+          {/* <div className="absolute top-0 right-0">
             <div className="mb-4 top-0 right-0 absolute">
               <label className="text-sm text-green-800 font-medium mr-2">Année :</label>
               <select
@@ -103,7 +92,7 @@ export function StatisticsCard({
                   ))}
               </select>
             </div>
-          </div>
+          </div> */}
         </CardHeader>
         
         <CardContent>

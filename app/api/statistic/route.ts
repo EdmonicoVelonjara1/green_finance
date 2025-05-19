@@ -54,7 +54,7 @@ export async function POST(req: Request) {
         min: row.min_price,
         max: row.max_price,
         stdDev: row.std_price,
-        skewness: 0,     
+        skewness: row.skewness,     
         kurtosis: 0,    
       }))[0]; 
       

@@ -11,47 +11,136 @@ import { ReturnsChart } from "@/components/returns-chart"
 import { useCompany } from "@/components/company-context"
 import { 
   type StockData, 
-  getSimulatedDataForCompany,
-   calculateDailyReturns } from "@/lib/data-utils"
+  // getSimulatedDataForCompany,
+  // calculateDailyReturns 
+} from "@/lib/data-utils"
 import { Button } from "@/components/ui/button"
 import { CompanyFilter } from "@/components/company-filter"
-
 
 export default function StatistiquesPage() {
   const [stockData, setStockData] = useState<StockData[]>([])
   const [loading, setLoading] = useState(true)
   const { selectedCompany } = useCompany() 
-
+  const [dailyReturns, setDailyReturns] = useState<{ date: Date; return: number }[]>([]);
+  const [year, setYear] = useState(2024);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  
   useEffect(() => {
     if(!selectedCompany) return
 
-    async function loadData() {
-      setLoading(true)
-      try {
-        const data = getSimulatedDataForCompany(selectedCompany)
+    // async function loadData() {
+    //   setLoading(true)
+    //   try {
+    //     const data = getSimulatedDataForCompany(selectedCompany)
         
-        setStockData(data)
+    //     setStockData(data)
+    //   } catch (error) {
+    //     console.error("Erreur lors du chargement des données:", error)
+    //   } finally {
+    //     setLoading(false)
+    //   }
+    // }
+
+    async function getData() {
+      // setLoading(true)
+      try {
+        const response = await fetch("/api/donnees-historiques", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            company: selectedCompany,
+          }),
+        })
+
+        const result = await response.json()
+
+        const transformedData = result.data.map((item: any) => ({
+          ...item,
+          date: new Date(item.date),
+        }))
+
+        setStockData(transformedData)
       } catch (error) {
-        console.error("Erreur lors du chargement des données:", error)
+        console.error("Erreur lors de la récupération des données:", error)
       } finally {
         setLoading(false)
       }
     }
-    loadData()
-  }, [selectedCompany])
 
-  const dailyReturns = calculateDailyReturns(stockData)
+    // async function getReturn() {
+    //   try {
+    //     const response = await fetch("/api/statistic/get_yield", {
+    //       method: "POST",
+    //       headers: { "Content-Type": "application/json" },
+    //       body: JSON.stringify({
+    //         company: selectedCompany,
+    //         year: year
+    //       }),
+    //     });
+    
+    //     const result = await response.json();
+    //     console.log("YIELD", JSON.stringify(result))
+    //     if (result.error || !result.data) {
+    //       console.warn("No data or error from API:", result);
+    //       setDailyReturns([]);
+    //       return;
+    //     }
+    //     setAvailableYears(result.years);
+    //     setDailyReturns(result.data);
+    //   } catch (error) {
+    //     console.error("Erreur lors de la récupération des données:", error);
+    //     setDailyReturns([]);
+    //   } finally {
+    //     setLoading(false);
+    //   }
+    // }
+    async function getReturn() {
+      try {
+        const response = await fetch("/api/statistic/get_yield", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            company: selectedCompany,
+            year: year
+          }),
+        });
+    
+        const result = await response.json();
+        console.log("YIELD API Response:", result);
+    
+        if (result.error || !Array.isArray(result.years)) {
+          console.warn("No valid years data from API:", result);
+          setAvailableYears([]);
+          return;
+        }
+    
+        setAvailableYears(result.years);
+        setDailyReturns(result.data || []);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données:", error);
+        setAvailableYears([]);
+        setDailyReturns([]);
+      }
+    }
+    getData()
+    getReturn()
+    // loadData()
+  }, [selectedCompany,year])
+
+  // const dailyReturns = calculateDailyReturns(stockData)
+
+
   const histogramData = Array(20)
     .fill(0)
     .map((_, i) => ({
       bin: -10 + i,
       count: 0,
-    }))
+    }));
 
   dailyReturns.forEach((day) => {
-    const binIndex = Math.min(Math.max(Math.floor(day.return + 10), 0), 19)
-    histogramData[binIndex].count++
-  })
+    const binIndex = Math.min(Math.max(Math.floor(day.return + 10), 0), 19);
+    histogramData[binIndex].count++;
+  });
 
   return (
     <div className="p-6">
@@ -87,7 +176,42 @@ export default function StatistiquesPage() {
                 Explorez les statistiques et la distribution des rendements pour Berkshire Hathaway
               </p> */}
             </div>
+            {/* <div className="absolute top-0 right-0">
+              <div className="mb-4 top-0 right-0 absolute">
+                <label className="text-sm text-green-800 font-medium mr-2">Année :</label>
+                <select
+                    value={year}
+                    onChange={(e) => setYear(parseInt(e.target.value))}
+                    className="border border-green-300 rounded-md px-2 py-1"
+                  >
+                    {availableYears?.map((y) => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                </select>
+              </div>
+            </div> */}
+            <div className="absolute top-0 right-0">
+              <div className="mb-4 top-0 right-0 absolute">
+                <label className="text-sm text-green-800 font-medium mr-2">Année :</label>
+                <select
+                  value={year}
+                  onChange={(e) => setYear(parseInt(e.target.value))}
+                  className="border border-green-300 rounded-md px-2 py-1"
+                >
+                  {Array.isArray(availableYears) && availableYears.length > 0 ? (
+                    availableYears.map((y) => (
+                      <option key={y} value={y}>
+                        {y}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>Aucune année disponible</option>
+                  )}
+                </select>
+              </div>
+            </div>
             <StatisticsCard
+              year={year}
               company= {selectedCompany}
               title="Statistiques descriptives"
               description="Mesures statistiques clés du prix de l'action"
@@ -95,9 +219,9 @@ export default function StatistiquesPage() {
 
             <Tabs defaultValue="returns">
               <TabsList className="mb-4">
-                <TabsTrigger value="returns">Rendements</TabsTrigger>
-                <TabsTrigger value="distribution">Distribution</TabsTrigger>
-                <TabsTrigger value="risk">Risque</TabsTrigger>
+                {/* <TabsTrigger value="returns">Rendements</TabsTrigger> */}
+                {/* <TabsTrigger value="distribution">Distribution</TabsTrigger> */}
+                {/* <TabsTrigger value="risk">Risque</TabsTrigger> */}
               </TabsList>
               <TabsContent value="returns">
                 <ReturnsChart data={stockData} height={500} />
@@ -154,7 +278,7 @@ export default function StatistiquesPage() {
                             Mesure de la dispersion des rendements sur une base annuelle
                           </p>
                         </div>
-                        <div>
+                        {/* <div>
                           <h3 className="text-lg font-semibold">Drawdown maximum</h3>
                           <p className="text-2xl font-bold">
                             {(() => {
@@ -171,6 +295,33 @@ export default function StatistiquesPage() {
                               })
 
                               return maxDrawdown.toFixed(2)
+                            })()}%
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            Baisse maximale par rapport au sommet précédent
+                          </p>
+                        </div> */}
+                        <div>
+                          <h3 className="text-lg font-semibold">Drawdown maximum</h3>
+                          <p className="text-2xl font-bold">
+                            {(() => {
+                              if (!stockData || stockData.length === 0) {
+                                return "N/A";
+                              }
+
+                              let peak = stockData[0]?.close || 0;
+                              let maxDrawdown = 0;
+
+                              stockData.forEach((day) => {
+                                if (day?.close > peak) {
+                                  peak = day.close;
+                                }
+
+                                const drawdown = ((peak - day?.close) / peak) * 100;
+                                maxDrawdown = Math.max(maxDrawdown, drawdown);
+                              });
+
+                              return maxDrawdown.toFixed(2);
                             })()}%
                           </p>
                           <p className="text-sm text-muted-foreground">
@@ -200,19 +351,30 @@ export default function StatistiquesPage() {
                             Rendement ajusté au risque (rendement excédentaire par unité de risque)
                           </p>
                         </div>
-                        <div>
-                          <h3 className="text-lg font-semibold">Value at Risk (VaR) 95%</h3>
-                          <p className="text-2xl font-bold">
-                            {(() => {
-                              const sortedReturns = [...dailyReturns].sort((a, b) => a.return - b.return)
-                              const index = Math.floor(0.05 * sortedReturns.length)
-                              return Math.abs(sortedReturns[index].return).toFixed(2)
-                            })()}%
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            Perte maximale attendue avec une probabilité de 95%
-                          </p>
-                        </div>
+                          <div>
+                            <h3 className="text-lg font-semibold">Volatilité annualisée</h3>
+                            <p className="text-2xl font-bold">
+                              {(() => {
+                                if (!dailyReturns || dailyReturns.length === 0) {
+                                  return "N/A";
+                                }
+
+                                const validReturns = dailyReturns.filter((day) => day?.return !== undefined);
+                                if (validReturns.length === 0) {
+                                  return "N/A";
+                                }
+
+                                const variance =
+                                  validReturns.reduce((acc, day) => acc + Math.pow(day.return, 2), 0) /
+                                  validReturns.length;
+
+                                return (Math.sqrt(252) * Math.sqrt(variance)).toFixed(2);
+                              })()}%
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              Mesure de la dispersion des rendements sur une base annuelle
+                            </p>
+                          </div>
                       </div>
                     </div>
                   </CardContent>

@@ -13,12 +13,16 @@ USE green_finance;
 
 CREATE TABLE IF NOT EXISTS ticker (
     id INT PRIMARY KEY NOT NULL,    
-    name VARCHAR(100)
+    name VARCHAR(100),
+    full_name VARCHAR(100)
 );
+
+
+
 
 -- Table de données boursières
 CREATE TABLE IF NOT EXISTS stock_market_data(
-    id INT PRIMARY KEY NOT NULL,
+    id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     id_ticker INT NOT NULL,
     date DATE,
     open FLOAT NOT NULL,
@@ -99,6 +103,7 @@ CREATE TABLE indicators_technical (
     macd_signal FLOAT,
     bollinger_upper FLOAT,
     bollinger_lower FLOAT,
+    
     date DATE NOT NULL,
     FOREIGN KEY (id_ticker) REFERENCES ticker(id_ticker)
 );
@@ -127,23 +132,23 @@ CREATE TABLE IF NOT EXISTS statistic (
     FOREIGN KEY (id_ticker) REFERENCES ticker(id)
 );
 
-CREATE TABLE overall_stat (
-    id INT PRIMARY KEY NOT NULL,
-    id_ticker INT NOT NULL,
+-- CREATE TABLE overall_stat (
+--     id INT PRIMARY KEY NOT NULL,
+--     id_ticker INT NOT NULL,
     
-    mean_price FLOAT,
-    median_price FLOAT,
-    min_price FLOAT,
-    max_price FLOAT,
-    std_price FLOAT, 
+--     mean_price FLOAT,
+--     median_price FLOAT,
+--     min_price FLOAT,
+--     max_price FLOAT,
+--     std_price FLOAT, 
 
-    mean_vol FLOAT,
-    median_vol FLOAT,
-    min_vol FLOAT,
-    max_vol FLOAT,
-    std_vol FLOAT, 
+--     mean_vol FLOAT,
+--     median_vol FLOAT,
+--     min_vol FLOAT,
+--     max_vol FLOAT,
+--     std_vol FLOAT, 
 
-    asym FLOAT,
-    year INT NOT NULL,
-    FOREIGN KEY (id_ticker) REFERENCES ticker(id) ON DELETE CASCADE
-);
+--     asym FLOAT,
+--     year INT NOT NULL,
+--     FOREIGN KEY (id_ticker) REFERENCES ticker(id) ON DELETE CASCADE
+-- );

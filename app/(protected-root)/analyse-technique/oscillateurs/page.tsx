@@ -1,165 +1,130 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-
-import { Button } from "@/components/ui/button"
-import { useCompany } from "@/components/company-context"
-import { type StockData, getSimulatedDataForCompany, calculateRSI } from "@/lib/data-utils"
-import { RefreshCw } from "lucide-react"
-import { CompanyFilter } from "@/components/company-filter"
+import { useEffect, useState } from "react";
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCompany } from "@/components/company-context";
+import { IRsiDATA } from "@/app/api/oscillateurs/route";
 
 export default function OscillateursPage() {
-  const [stockData, setStockData] = useState<StockData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [rsiPeriod, setRsiPeriod] = useState("14")
-  const [rsiOverbought, setRsiOverbought] = useState("70")
-  const [rsiOversold, setRsiOversold] = useState("30")
+  const [rsiData, setRsiData] = useState<IRsiDATA[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [rsiOverbought, setRsiOverbought] = useState("70");
+  const [rsiOversold, setRsiOversold] = useState("30");
 
-  const { selectedCompany } = useCompany() // Moved hook outside useEffect
+  const { selectedCompany } = useCompany();
 
   useEffect(() => {
-    async function loadData() {
-      setLoading(true)
+    async function fetchRsiData() {
+      setLoading(true);
       try {
-        // Utiliser la fonction getSimulatedDataForCompany pour obtenir des données spécifiques à l'entreprise
-        const data = getSimulatedDataForCompany(selectedCompany)
-        setStockData(data)
+        const response = await fetch("/api/oscillateurs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ company: selectedCompany }),
+        });
+
+        const result = await response.json();
+
+        if (result.error) {
+          console.error("Erreur API :", result.error);
+          setRsiData([]);
+          return;
+        }
+
+        setRsiData(
+          result.data.map((item: IRsiDATA) => ({
+            ...item,
+            date: new Date(item.date).toISOString().split("T")[0], // Formater la date
+          }))
+        );
       } catch (error) {
-        console.error("Erreur lors du chargement des données:", error)
+        console.error("Erreur lors de la récupération des données :", error);
+        setRsiData([]);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
 
-    loadData()
-  }, [selectedCompany])
-
-  // Calculer le RSI
-  const rsiData = stockData.length > 0 ? calculateRSI(stockData, Number.parseInt(rsiPeriod)) : []
+    fetchRsiData();
+  }, [selectedCompany]);
 
   // Préparer les données pour le graphique
-  const priceChartData = stockData.map((day, index) => {
-    return {
-      date: day.date.toISOString().split("T")[0],
-      price: day.close,
-    }
-  })
-
-  const rsiChartData = rsiData.map((day) => {
-    return {
-      date: day.date.toISOString().split("T")[0],
-      rsi: day.rsi,
-      overbought: Number.parseInt(rsiOverbought),
-      oversold: Number.parseInt(rsiOversold),
-    }
-  })
-
-  // Identifier les signaux RSI
-  const rsiSignals = []
-  for (let i = 1; i < rsiChartData.length; i++) {
-    const prev = rsiChartData[i - 1]
-    const curr = rsiChartData[i]
-
-    // Signal de survente: RSI passe sous le niveau de survente
-    if (
-      prev.rsi !== null &&
-      curr.rsi !== null &&
-      prev.rsi > Number.parseInt(rsiOversold) &&
-      curr.rsi <= Number.parseInt(rsiOversold)
-    ) {
-      rsiSignals.push({
-        date: new Date(curr.date).toLocaleDateString(),
-        type: "Survente",
-        description: `RSI est passé sous le niveau de survente (${rsiOversold})`,
-        signal: "Achat potentiel",
-      })
-    }
-
-    // Signal de surachat: RSI passe au-dessus du niveau de surachat
-    if (
-      prev.rsi !== null &&
-      curr.rsi !== null &&
-      prev.rsi < Number.parseInt(rsiOverbought) &&
-      curr.rsi >= Number.parseInt(rsiOverbought)
-    ) {
-      rsiSignals.push({
-        date: new Date(curr.date).toLocaleDateString(),
-        type: "Surachat",
-        description: `RSI est passé au-dessus du niveau de surachat (${rsiOverbought})`,
-        signal: "Vente potentielle",
-      })
-    }
-
-    // Signal de sortie de survente: RSI remonte au-dessus du niveau de survente
-    if (
-      prev.rsi !== null &&
-      curr.rsi !== null &&
-      prev.rsi <= Number.parseInt(rsiOversold) &&
-      curr.rsi > Number.parseInt(rsiOversold)
-    ) {
-      rsiSignals.push({
-        date: new Date(curr.date).toLocaleDateString(),
-        type: "Sortie de survente",
-        description: `RSI est remonté au-dessus du niveau de survente (${rsiOversold})`,
-        signal: "Confirmation d'achat",
-      })
-    }
-
-    // Signal de sortie de surachat: RSI redescend sous le niveau de surachat
-    if (
-      prev.rsi !== null &&
-      curr.rsi !== null &&
-      prev.rsi >= Number.parseInt(rsiOverbought) &&
-      curr.rsi < Number.parseInt(rsiOverbought)
-    ) {
-      rsiSignals.push({
-        date: new Date(curr.date).toLocaleDateString(),
-        type: "Sortie de surachat",
-        description: `RSI est redescendu sous le niveau de surachat (${rsiOverbought})`,
-        signal: "Confirmation de vente",
-      })
-    }
-
-    // Divergence haussière: prix fait un nouveau plus bas mais RSI fait un plus bas plus haut
-    if (
-      i > 10 &&
-      curr.rsi !== null &&
-      rsiChartData[i - 10].rsi !== null &&
-      stockData[i].close < stockData[i - 10].close &&
-      curr.rsi > rsiChartData[i - 10].rsi
-    ) {
-      rsiSignals.push({
-        date: new Date(curr.date).toLocaleDateString(),
-        type: "Divergence haussière",
-        description: `Le prix fait un nouveau plus bas mais le RSI fait un plus bas plus haut`,
-        signal: "Achat potentiel",
-      })
-    }
-  }
-
-  // Limiter aux 5 signaux les plus récents
-  const recentRsiSignals = rsiSignals.slice(-5).reverse()
+  const rsiChartData = rsiData.map((day) => ({
+    date: day.date,
+    rsi_7: day.rsi_7,
+    rsi_14: day.rsi_14,
+    rsi_21: day.rsi_21,
+    overbought: Number.parseInt(rsiOverbought),
+    oversold: Number.parseInt(rsiOversold),
+  }));
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-green-800">Oscillateurs</h1>
-        <div className="flex items-center gap-3">
-          <CompanyFilter />
-          <Button variant="outline" size="sm" className="flex items-center gap-1 text-green-700 border-green-200">
-            <RefreshCw size={14} />
-            <span>Actualiser</span>
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" className="flex items-center gap-1 text-green-700 border-green-200">
+          Actualiser
+        </Button>
       </div>
 
-      {/* Contenu de la page */}
-      <div className="grid grid-cols-1 gap-6">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4 text-green-800">Oscillateurs</h2>
-          <p className="text-gray-600">Cette page présente les oscillateurs techniques pour l'action sélectionnée.</p>
+      {loading ? (
+        <div className="flex h-64 items-center justify-center">
+          <p>Chargement des données...</p>
         </div>
-      </div>
+      ) : rsiChartData.length === 0 ? (
+        <p>Aucune donnée RSI disponible pour {selectedCompany}.</p>
+      ) : (
+        <div className="grid gap-6">
+          {/* Graphique RSI */}
+          <Card className="border-green-100">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-green-800">RSI (Relative Strength Index)</CardTitle>
+              <CardDescription>Analyse des oscillateurs RSI</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={rsiChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis domain={[0, 100]} />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="rsi_7" stroke="#10b981" name="RSI (7)" />
+                  <Line type="monotone" dataKey="rsi_14" stroke="#059669" name="RSI (14)" />
+                  <Line type="monotone" dataKey="rsi_21" stroke="#047857" name="RSI (21)" />
+                  <Line
+                    type="monotone"
+                    dataKey="overbought"
+                    stroke="#ef4444"
+                    name="Surachat"
+                    strokeDasharray="3 3"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="oversold"
+                    stroke="#22c55e"
+                    name="Survente"
+                    strokeDasharray="3 3"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
-  )
+  );
 }

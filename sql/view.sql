@@ -300,6 +300,7 @@ ORDER BY ABS(ap.anomaly_price) DESC, ABS(ap.anomaly_volume) DESC;
 -- Vue 15: Résumé complet par ticker
 -- Objectif: Combiner les données récentes de toutes les tables pour un résumé complet.
 -- Utilité: Fournit une vue unique pour chaque ticker, idéale pour les rapports détaillés.
+
 CREATE OR REPLACE VIEW full_ticker_summary AS
 SELECT 
     t.id AS id_ticker,
