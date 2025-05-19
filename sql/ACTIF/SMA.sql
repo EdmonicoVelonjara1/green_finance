@@ -6,7 +6,7 @@ CREATE PROCEDURE calculate_sma (
     IN p_period INT
 )
 BEGIN
-    -- Create table to store SMA results
+    -- Table pour stocker les resultas SMA
     CREATE TABLE IF NOT EXISTS indicator_sma (
         id INT AUTO_INCREMENT PRIMARY KEY,
         id_ticker INT,
@@ -16,10 +16,10 @@ BEGIN
         FOREIGN KEY (id_ticker) REFERENCES stock_data(id_ticker)
     );
 
-    -- Clear existing SMA data for this ticker and period
+    -- Liberation de l'ancien SMA
     DELETE FROM indicator_sma WHERE id_ticker = p_ticker_id AND period = p_period;
 
-    -- Insert SMA: average of close prices over the last 'period' days
+    -- Insertion de SMA
     INSERT INTO indicator_sma (id_ticker, date, sma, period)
     SELECT 
         id_ticker,
